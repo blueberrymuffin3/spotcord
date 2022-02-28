@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: downloader
+spec:
+  selector:
+    matchLabels:
+      app: downloader
+  template:
+    metadata:
+      labels:
+        app: downloader
+    spec:
+      containers:
+        - name: downloader
+          image: registry.appjackstudio.com/spotcord/downloader
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "1500m"
+          volumeMounts:
+            - name: secret
+              mountPath: /secret
+              readOnly: true
+            - name: cache
+              mountPath: /cache
+          ports:
+            - name: http
+              containerPort: 5000
+          startupProbe:
+            httpGet:
+              port: 5000
+              path: /health
+      volumes:
+        - name: secret
+          secret:
+            secretName: spotify
+        - name: cache
+          hostPath:
+            path: /data/cache/spotcord
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: downloader
+spec:
+  selector:
+    app: downloader
+  ports:
+    - port: 80
+      targetPort: http

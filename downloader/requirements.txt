@@ -1,0 +1,4 @@
+git+https://github.com/kokarare1212/librespot-python
+ffmpeg-python
+quart
+diskcache

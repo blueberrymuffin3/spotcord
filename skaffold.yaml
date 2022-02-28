@@ -1,0 +1,14 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: spotcord
+build:
+  artifacts:
+  - image: registry.appjackstudio.com/spotcord/downloader
+    context: downloader
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kustomize:
+    paths:
+    - kube
