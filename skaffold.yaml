@@ -8,6 +8,12 @@ build:
     context: downloader
     docker:
       dockerfile: Dockerfile
+  - image: registry.appjackstudio.com/spotcord/bot
+    context: bot
+    docker:
+      dockerfile: Dockerfile
+  local:
+    useBuildkit: true
 deploy:
   kustomize:
     paths:

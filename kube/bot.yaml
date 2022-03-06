@@ -17,7 +17,7 @@ spec:
         resources:
           limits:
             memory: "128Mi"
-            cpu: "500m"
-        volumeMounts:
-          - mountPath: /secret
-            name: config
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: bot-env

@@ -16,7 +16,7 @@ spec:
           image: registry.appjackstudio.com/spotcord/downloader
           resources:
             limits:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "1500m"
           volumeMounts:
             - name: secret

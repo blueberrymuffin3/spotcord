@@ -1,0 +1,28 @@
+{
+  "name": "spotcord_bot",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "deploy-commands": "tsc && node dist/deploy-commands.js",
+    "build": "tsc",
+    "dev": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@discordjs/builders": "^0.12.0",
+    "@discordjs/rest": "^0.3.0",
+    "@types/spotify-api": "^0.0.13",
+    "discord-api-types": "^0.27.3",
+    "discord.js": "^13.6.0",
+    "dotenv": "^16.0.0",
+    "html-entities": "^2.3.2",
+    "node-fetch": "2",
+    "spotify-web-api-node": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/spotify-web-api-node": "^5.0.7",
+    "nodemon": "^2.0.15",
+    "typescript": "^4.6.2"
+  }
+}
