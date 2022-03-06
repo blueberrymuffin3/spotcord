@@ -36,4 +36,4 @@ COPY . .
 RUN python -m compileall ./
 
 # Run the application
-CMD ["python", "main.py"]
+CMD python main.py
