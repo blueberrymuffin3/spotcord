@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ffmpeg-python = "*"
+quart = "*"
+diskcache = "*"
+librespot = {editable = true, ref = "b00752ff68d2e13d701b6ca9a4cce0890964c050", git = "https://github.com/kokarare1212/librespot-python.git"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
