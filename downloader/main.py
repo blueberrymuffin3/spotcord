@@ -1,5 +1,3 @@
-from asyncore import read
-from io import BufferedReader
 import quart
 
 from downloader import Downloader

@@ -1,6 +1,4 @@
 from asyncio import Future
-from asyncore import read
-from functools import cache
 import os
 from queue import Queue
 from tempfile import mktemp
@@ -16,7 +14,7 @@ from diskcache import Cache
 CACHE_LOCATION = "/cache"
 CHUNK_SIZE = 128 * 1024
 ANTI_BAN_WAIT_TIME = 5
-FFMPEG_ARGS_OUT = {"c:a": "libopus", "b:a": "96k", "f": "ogg"}
+FFMPEG_ARGS_OUT = {"c:a": "libopus", "b:a": "160k", "f": "ogg"}
 
 
 class Downloader():
