@@ -11,7 +11,7 @@ import {
 } from '@discordjs/voice';
 import type { Track } from './track';
 import { promisify } from 'node:util';
-import { Snowflake } from 'discord.js';
+import { Snowflake, TextChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
 export const subscriptions = new Map<Snowflake, MusicSubscription>();
@@ -116,9 +116,6 @@ export class MusicSubscription {
 	 */
 	public enqueue(track: Track) {
 		this.queue.push(track);
-		if(this.queue.length == 1){
-			track.preload()
-		}
 		void this.processQueue();
 	}
 
@@ -146,12 +143,8 @@ export class MusicSubscription {
 		const nextTrack = this.queue.shift()!;
 		try {
 			// Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
-			let resource = nextTrack.createAudioResource();
-
-			// Preload next track if available
-			this.queue[0]?.preload()
-
-			this.audioPlayer.play(await resource);
+			let resource = await nextTrack.createAudioResource();
+			this.audioPlayer.play(resource);
 			this.queueLock = false;
 		} catch (error) {
 			// If an error occurred, try the next item of the queue instead

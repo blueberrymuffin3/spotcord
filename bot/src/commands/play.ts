@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, GuildMember, MessageActionRow, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
-import { SpotifyClient } from '../spotify-api.js';
+import { CommandInteraction, GuildMember, Message, MessageActionRow, MessageSelectMenu, SelectMenuInteraction, Util } from 'discord.js';
 import { formatDurationMs, formatPlural, truncateEllipses } from '../util.js';
 import { decode as decodeEntity } from 'html-entities';
 import { Track } from '../music/track.js';
 import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 import { MusicSubscription, subscriptions } from '../music/subscription.js';
+import * as spotify from '../spotify-api.js';
 
 const customIdSelectSearchResultTrack = "select_search_result_track";
 const customIdSelectSearchResultAlbum = "select_search_result_album";
@@ -26,15 +26,15 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
     let query = interaction.options.getString("query") as string
-    let { body } = await SpotifyClient.search(query, ['track', 'album', 'playlist'])
+    let results = await spotify.search(query)
 
     const menus: MessageSelectMenu[] = []
 
-    if (body.tracks!.items.length > 0) {
+    if (results.tracks!.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultTrack)
-            .setPlaceholder(`${formatPlural(body.tracks!.total, 'tracks', 'track')} found`)
-            .addOptions(body.tracks!.items.map(track => {
+            .setPlaceholder(`${formatPlural(results.tracks!.total, 'tracks', 'track')} found`)
+            .addOptions(results.tracks!.items.map(track => {
                 let artists = track.artists
                     .map(artist => artist.name)
                     .join(', ')
@@ -52,11 +52,11 @@ export async function execute(interaction: CommandInteraction) {
         )
     }
 
-    if (body.albums!.items.length > 0) {
+    if (results.albums!.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultAlbum)
-            .setPlaceholder(`${formatPlural(body.albums!.total, 'albums', 'album')} found`)
-            .addOptions(body.albums!.items.map(album => {
+            .setPlaceholder(`${formatPlural(results.albums!.total, 'albums', 'album')} found`)
+            .addOptions(results.albums!.items.map(album => {
                 let artists = album.artists
                     .map(artist => artist.name)
                     .join(', ')
@@ -71,11 +71,11 @@ export async function execute(interaction: CommandInteraction) {
         )
     }
 
-    if (body.playlists!.items.length > 0) {
+    if (results.playlists!.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultPlaylist)
-            .setPlaceholder(`${formatPlural(body.playlists!.total, 'playlists', 'playlist')} found`)
-            .addOptions(body.playlists!.items.map(playlist => {
+            .setPlaceholder(`${formatPlural(results.playlists!.total, 'playlists', 'playlist')} found`)
+            .addOptions(results.playlists!.items.map(playlist => {
                 let description = playlist.description || ''
                 description = decodeEntity(description, { scope: 'strict' })
                 description = truncateEllipses(description, TRUNCATE_LENGTH_LONG)
@@ -154,23 +154,31 @@ export async function interact(interaction: SelectMenuInteraction) {
             }
 
             try {
+                let nowPlayingMessage: Message | undefined = undefined
                 // Attempt to create a Track from the user's video URL
-                const track = await Track.from(trackId, {
-                    onStart() {
-                        update('Now playing!').catch(console.warn);
+                const track = await Track.from(trackId, interaction.user, {
+                    async onStart() {
+                        nowPlayingMessage = await interaction.channel?.send({
+                            content: "Now Playing",
+                            embeds: [await track.generateEmbed()]
+                        })
                     },
-                    onFinish() {
-                        update('Now finished!').catch(console.warn);
+                    async onFinish() {
+                        if (nowPlayingMessage?.deletable) {
+                            await nowPlayingMessage?.delete()
+                        }
                     },
-                    onError(error) {
-                        console.warn(error);
-                        update(`Error: ${error.message}`).catch(console.warn);
+                    async onError(error) {
+                        console.warn(error)
+                        if (nowPlayingMessage?.deletable) {
+                            await nowPlayingMessage?.delete()
+                        }
+                        await interaction.channel?.send(`An error occurred playing \`${Util.escapeMarkdown(track.info.name)}\``)
                     },
                 });
                 // Enqueue the track and reply a success message to the user
                 subscription.enqueue(track);
-                await interaction.deleteReply();
-                // await update(`Enqueued **${track.info.name}**`);
+                update(`\`${Util.escapeMarkdown(track.info.name)}\` added to queue`)
             } catch (error) {
                 console.warn(error);
                 await interaction.followUp('Failed to play track, please try again later!');
