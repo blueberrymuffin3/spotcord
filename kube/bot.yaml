@@ -13,6 +13,19 @@ spec:
       labels:
         app: bot
     spec:
+      initContainers:
+      - name: deploy-commands
+        image: registry.appjackstudio.com/spotcord/bot
+        command:
+          - node
+          - dist/deploy-commands.js
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: bot-env
       containers:
       - name: bot
         image: registry.appjackstudio.com/spotcord/bot
