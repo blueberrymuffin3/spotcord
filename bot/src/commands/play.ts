@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, MessageActionRow, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
-import { spotifyApi } from '../spotify-api.js';
+import { CommandInteraction, GuildMember, MessageActionRow, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
+import { SpotifyClient } from '../spotify-api.js';
 import { formatDurationMs, formatPlural, truncateEllipses } from '../util.js';
 import { decode as decodeEntity } from 'html-entities';
+import { Track } from '../music/track.js';
+import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
+import { MusicSubscription, subscriptions } from '../music/subscription.js';
 
 const customIdSelectSearchResultTrack = "select_search_result_track";
 const customIdSelectSearchResultAlbum = "select_search_result_album";
@@ -23,7 +26,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
     let query = interaction.options.getString("query") as string
-    let { body } = await spotifyApi.search(query, ['track', 'album', 'playlist'])
+    let { body } = await SpotifyClient.search(query, ['track', 'album', 'playlist'])
 
     const menus: MessageSelectMenu[] = []
 
@@ -103,15 +106,79 @@ export async function execute(interaction: CommandInteraction) {
 
 export const interactionIds = [customIdSelectSearchResultTrack, customIdSelectSearchResultAlbum, customIdSelectSearchResultPlaylist]
 
+
 export async function interact(interaction: SelectMenuInteraction) {
+    if (!interaction.guildId) return;
+    let subscription = subscriptions.get(interaction.guildId)
+
+    const update = (content: string) => interaction.update({
+        content: content,
+        components: []
+    })
+
     switch (interaction.customId) {
         case customIdSelectSearchResultTrack:
+            // Extract the track id from the command
+            const trackId = interaction.values[0];
+
+            // If a connection to the guild doesn't already exist and the user is in a voice channel, join that channel
+            // and create a subscription.
+            if (!subscription) {
+                if (interaction.member instanceof GuildMember && interaction.member.voice.channel) {
+                    const channel = interaction.member.voice.channel;
+                    subscription = new MusicSubscription(
+                        joinVoiceChannel({
+                            channelId: channel.id,
+                            guildId: channel.guild.id,
+                            adapterCreator: channel.guild.voiceAdapterCreator,
+                        }),
+                    );
+                    subscription.voiceConnection.on('error', console.warn);
+                    subscriptions.set(interaction.guildId, subscription);
+                }
+            }
+
+            // If there is no subscription, tell the user they need to join a channel.
+            if (!subscription) {
+                await update('Join a voice channel and then try that again!');
+                return;
+            }
+
+            // Make sure the connection is ready before processing the user's request
+            try {
+                await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
+            } catch (error) {
+                console.warn(error);
+                await update('Failed to join voice channel within 20 seconds, please try again later!');
+                return;
+            }
+
+            try {
+                // Attempt to create a Track from the user's video URL
+                const track = await Track.from(trackId, {
+                    onStart() {
+                        update('Now playing!').catch(console.warn);
+                    },
+                    onFinish() {
+                        update('Now finished!').catch(console.warn);
+                    },
+                    onError(error) {
+                        console.warn(error);
+                        update(`Error: ${error.message}`).catch(console.warn);
+                    },
+                });
+                // Enqueue the track and reply a success message to the user
+                subscription.enqueue(track);
+                await interaction.deleteReply();
+                // await update(`Enqueued **${track.info.name}**`);
+            } catch (error) {
+                console.warn(error);
+                await interaction.followUp('Failed to play track, please try again later!');
+            }
+            break;
         case customIdSelectSearchResultAlbum:
         case customIdSelectSearchResultPlaylist:
-            interaction.update({
-                content: `Playing ${interaction.values[0]}... \`${interaction.customId}\``,
-                components: []
-            })
+            await update('Not yet implemented, please be patient!')
             break;
         default:
             throw new Error(`Unknown interaction ID ${interaction.customId}`)

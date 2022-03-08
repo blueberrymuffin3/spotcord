@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
+import { getVoiceConnections } from '@discordjs/voice'
 dotenv.config()
 
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
 
 let commands: Record<string, any> = {};
 let interactions: Record<string, any> = {};
@@ -16,8 +17,8 @@ for (const file of commandFiles) {
 	// Set a new item in the Collection
 	// With the key as the command name and the value as the exported module
 	commands[command.data.name] = command;
-	if(command.interactionIds !== undefined){
-		for (let customId of command.interactionIds){
+	if (command.interactionIds !== undefined) {
+		for (let customId of command.interactionIds) {
 			interactions[customId] = command
 		}
 	}
@@ -44,7 +45,7 @@ client.on('interactionCreate', async interaction => {
 			await command.execute(interaction);
 		} catch (error) {
 			console.error(error);
-			if(interaction.replied || interaction.deferred){
+			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
 			} else {
 				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
@@ -62,5 +63,19 @@ client.on('interactionCreate', async interaction => {
 		}
 	}
 });
+
+const shutdown = (signal: string) => {
+	console.log(`Shutting down due to ${signal}...`)
+	for (let [id, connection] of getVoiceConnections()) {
+		console.log(`Closing connection ${id}`)
+		connection.destroy();
+	}
+	client.destroy();
+	console.log(`Done shutting down`)
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)
+client.on('error', console.warn);
 
 client.login(DISCORD_TOKEN);

@@ -28,7 +28,8 @@ spec:
             - name: http
               containerPort: 5000
           startupProbe:
-            initialDelaySeconds: 30
+            failureThreshold: 10
+            initialDelaySeconds: 10
             httpGet:
               port: 5000
               path: /health
@@ -37,8 +38,10 @@ spec:
           secret:
             secretName: spotify
         - name: cache
-          hostPath:
-            path: /data/cache/spotcord
+          emptyDir:
+            sizeLimit: 5Gi
+          # hostPath:
+            # path: /data/cache/spotcord
 ---
 apiVersion: v1
 kind: Service
