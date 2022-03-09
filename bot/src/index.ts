@@ -1,10 +1,8 @@
 import dotenv from 'dotenv';
-import { getVoiceConnections } from '@discordjs/voice'
 dotenv.config()
 
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
-import { setupSpotifyClient } from './spotify-api';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });

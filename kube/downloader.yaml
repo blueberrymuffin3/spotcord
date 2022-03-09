@@ -38,10 +38,10 @@ spec:
           secret:
             secretName: spotify
         - name: cache
-          emptyDir:
-            sizeLimit: 5Gi
-          # hostPath:
-            # path: /data/cache/spotcord
+          # emptyDir:
+          #   sizeLimit: 5Gi
+          hostPath:
+            path: /data/cache/spotcord
 ---
 apiVersion: v1
 kind: Service
