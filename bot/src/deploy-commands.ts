@@ -18,17 +18,15 @@ console.log(JSON.stringify(commands, null, 4))
 
 const rest = new REST({ version: '9' }).setToken(DISCORD_TOKEN);
 
-(async () => {
-    try {
-        console.log('Started refreshing application (/) commands.');
+try {
+    console.log('Started refreshing application (/) commands.');
 
-        await rest.put(
-            Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID),
-            { body: commands },
-        );
+    await rest.put(
+        Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID),
+        { body: commands },
+    );
 
-        console.log('Successfully reloaded application (/) commands.');
-    } catch (error) {
-        console.error(error);
-    }
-})();
+    console.log('Successfully reloaded application (/) commands.');
+} catch (error) {
+    console.error(error);
+}

@@ -4,6 +4,7 @@ import {
 	AudioResource,
 	createAudioPlayer,
 	entersState,
+	joinVoiceChannel,
 	VoiceConnection,
 	VoiceConnectionDisconnectReason,
 	VoiceConnectionState,
@@ -11,10 +12,26 @@ import {
 } from '@discordjs/voice';
 import type { Track } from './track';
 import { promisify } from 'node:util';
-import { Snowflake, TextChannel } from 'discord.js';
+import { Snowflake, VoiceBasedChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
-export const subscriptions = new Map<Snowflake, MusicSubscription>();
+const subscriptions = new Map<Snowflake, MusicSubscription>();
+
+export function getSubscription(guildId: string, createIfNotExist = false, createIn: VoiceBasedChannel | null = null) {
+	let subscription = subscriptions.get(guildId)
+	if (!subscription && createIfNotExist && createIn) {
+		subscription = new MusicSubscription(
+			joinVoiceChannel({
+				guildId: guildId,
+				channelId: createIn.id,
+				adapterCreator: createIn.guild.voiceAdapterCreator,
+			}),
+		);
+		subscription.voiceConnection.on('error', console.warn);
+		subscriptions.set(guildId, subscription);
+	}
+	return subscription
+}
 
 /**
  * A MusicSubscription exists for each active VoiceConnection. Each subscription has its own audio player and queue,
@@ -67,6 +84,7 @@ export class MusicSubscription {
 			 * Once destroyed, stop the subscription.
 			 */
 			this.stop();
+			subscriptions.delete(this.voiceConnection.joinConfig.guildId)
 		})
 
 		const connectingSignalling = async (_oldState: VoiceConnectionState, _newState: VoiceConnectionState) => {

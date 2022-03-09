@@ -3,8 +3,8 @@ import { CommandInteraction, GuildMember, Message, MessageActionRow, MessageSele
 import { formatDurationMs, formatPlural, truncateEllipses } from '../util.js';
 import { decode as decodeEntity } from 'html-entities';
 import { Track } from '../music/track.js';
-import { entersState, joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
-import { MusicSubscription, subscriptions } from '../music/subscription.js';
+import { entersState, VoiceConnectionStatus } from '@discordjs/voice';
+import { getSubscription } from '../music/subscription.js';
 import * as spotify from '../spotify-api.js';
 
 const customIdSelectSearchResultTrack = "select_search_result_track";
@@ -109,47 +109,31 @@ export const interactionIds = [customIdSelectSearchResultTrack, customIdSelectSe
 
 export async function interact(interaction: SelectMenuInteraction) {
     if (!interaction.guildId) return;
-    let subscription = subscriptions.get(interaction.guildId)
-
-    const update = (content: string) => interaction.update({
+    if (!(interaction.member instanceof GuildMember)) return
+    
+    const updateAndClear = (content: string) => interaction.update({
         content: content,
         components: []
     })
+
+    let subscription = getSubscription(interaction.guildId, true, interaction.member.voice.channel)
+
+    if (!subscription) {
+        await interaction.update('Join a voice channel and then try that again!');
+        return;
+    }
 
     switch (interaction.customId) {
         case customIdSelectSearchResultTrack:
             // Extract the track id from the command
             const trackId = interaction.values[0];
 
-            // If a connection to the guild doesn't already exist and the user is in a voice channel, join that channel
-            // and create a subscription.
-            if (!subscription) {
-                if (interaction.member instanceof GuildMember && interaction.member.voice.channel) {
-                    const channel = interaction.member.voice.channel;
-                    subscription = new MusicSubscription(
-                        joinVoiceChannel({
-                            channelId: channel.id,
-                            guildId: channel.guild.id,
-                            adapterCreator: channel.guild.voiceAdapterCreator,
-                        }),
-                    );
-                    subscription.voiceConnection.on('error', console.warn);
-                    subscriptions.set(interaction.guildId, subscription);
-                }
-            }
-
-            // If there is no subscription, tell the user they need to join a channel.
-            if (!subscription) {
-                await update('Join a voice channel and then try that again!');
-                return;
-            }
-
             // Make sure the connection is ready before processing the user's request
             try {
                 await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
             } catch (error) {
                 console.warn(error);
-                await update('Failed to join voice channel within 20 seconds, please try again later!');
+                await interaction.update('Failed to join voice channel within 20 seconds, please try again later!');
                 return;
             }
 
@@ -178,7 +162,7 @@ export async function interact(interaction: SelectMenuInteraction) {
                 });
                 // Enqueue the track and reply a success message to the user
                 subscription.enqueue(track);
-                update(`\`${Util.escapeMarkdown(track.info.name)}\` added to queue`)
+                updateAndClear(`\`${Util.escapeMarkdown(track.info.name)}\` added to queue`)
             } catch (error) {
                 console.warn(error);
                 await interaction.followUp('Failed to play track, please try again later!');
@@ -186,7 +170,7 @@ export async function interact(interaction: SelectMenuInteraction) {
             break;
         case customIdSelectSearchResultAlbum:
         case customIdSelectSearchResultPlaylist:
-            await update('Not yet implemented, please be patient!')
+            await updateAndClear('Not yet implemented, please be patient!')
             break;
         default:
             throw new Error(`Unknown interaction ID ${interaction.customId}`)

@@ -4,6 +4,7 @@ dotenv.config()
 
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
+import { setupSpotifyClient } from './spotify-api';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
@@ -66,10 +67,6 @@ client.on('interactionCreate', async interaction => {
 
 const shutdown = (signal: string) => {
 	console.log(`Shutting down due to ${signal}...`)
-	for (let [id, connection] of getVoiceConnections()) {
-		console.log(`Closing connection ${id}`)
-		connection.destroy();
-	}
 	client.destroy();
 	console.log(`Done shutting down`)
 }
@@ -78,4 +75,5 @@ process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
 client.on('error', console.warn);
 
-client.login(DISCORD_TOKEN);
+// await setupSpotifyClient()
+await client.login(DISCORD_TOKEN);

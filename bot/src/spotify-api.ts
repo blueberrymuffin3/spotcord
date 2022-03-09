@@ -15,19 +15,25 @@ const spotifyClient = new SpotifyWebApi({
 })
 
 const REFRESH_ON_REMAINING = 600;
+export let setupSpotifyClient = async () => {
+    setupSpotifyClient = async () => {}
+    await refreshAccessToken()
+}
 
 async function refreshAccessToken() {
-    const { body } = await retry(() => spotifyClient.clientCredentialsGrant(), {
+    const { body } = await retry(() => {
+        console.log("Refreshing spotify access token...")
+        return spotifyClient.clientCredentialsGrant()
+    }, {
         forever: true, onRetry: console.warn, maxTimeout: REFRESH_ON_REMAINING * 1000
     })
     spotifyClient.setAccessToken(body.access_token)
     console.log(`Refreshed spotify access token, expires in ${body.expires_in} seconds`)
-    setTimeout(refreshAccessToken, (body.expires_in - REFRESH_ON_REMAINING) * 1000);
+    setTimeout(refreshAccessToken, (body.expires_in - REFRESH_ON_REMAINING) * 1000).unref()
 }
 
-await refreshAccessToken()
-
 export async function search(query: string) {
+    await setupSpotifyClient()
     const { body } = await spotifyClient.search(query, ['track', 'album', 'playlist'])
     for (const track of body.tracks?.items || []) {
         trackCacheSimple.set(track.id, track)
@@ -36,6 +42,7 @@ export async function search(query: string) {
 }
 
 export async function getTrackFull(trackId: string) {
+    await setupSpotifyClient()
     let track = trackCacheFull.get<SpotifyApi.TrackObjectFull>(trackId)
     if (track == undefined) {
         track = (await spotifyClient.getTrack(trackId)).body
@@ -46,6 +53,7 @@ export async function getTrackFull(trackId: string) {
 }
 
 export async function getTrackSimple(trackId: string) {
+    await setupSpotifyClient()
     let track = trackCacheSimple.get<SpotifyApi.TrackObjectFull>(trackId)
     if (track == undefined) {
         return getTrackFull(trackId)
