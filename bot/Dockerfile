@@ -12,4 +12,4 @@ RUN yarn build
 
 FROM base as app
 COPY --from=build /app/dist dist
-CMD node dist
+CMD node --enable-source-maps dist
