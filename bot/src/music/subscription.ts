@@ -12,12 +12,17 @@ import {
 } from '@discordjs/voice';
 import type { Track } from './track';
 import { promisify } from 'node:util';
-import { Snowflake, VoiceBasedChannel } from 'discord.js';
+import { Message, Snowflake, TextBasedChannel, Util, VoiceBasedChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 
-export function getSubscription(guildId: string, createIfNotExist = false, createIn: VoiceBasedChannel | null = null) {
+export function getSubscription(
+	guildId: string,
+	createIfNotExist = false,
+	createIn: VoiceBasedChannel | null = null,
+	updatesTo: TextBasedChannel | null = null
+) {
 	let subscription = subscriptions.get(guildId)
 	if (!subscription && createIfNotExist && createIn) {
 		subscription = new MusicSubscription(
@@ -26,6 +31,7 @@ export function getSubscription(guildId: string, createIfNotExist = false, creat
 				channelId: createIn.id,
 				adapterCreator: createIn.guild.voiceAdapterCreator,
 			}),
+			updatesTo!
 		);
 		subscription.voiceConnection.on('error', console.warn);
 		subscriptions.set(guildId, subscription);
@@ -43,9 +49,12 @@ export class MusicSubscription {
 	public queue: Track[];
 	public queueLock = false;
 	public readyLock = false;
+	private updates: TextBasedChannel
+	private nowPlayingMessage: Message | undefined
 
-	public constructor(voiceConnection: VoiceConnection) {
+	public constructor(voiceConnection: VoiceConnection, updates: TextBasedChannel) {
 		this.voiceConnection = voiceConnection;
+		this.updates = updates;
 		this.audioPlayer = createAudioPlayer();
 		this.queue = [];
 
@@ -111,18 +120,18 @@ export class MusicSubscription {
 		// Configure audio player
 		this.audioPlayer.on(AudioPlayerStatus.Idle, (oldState, _newState) => {
 			if (oldState.status != AudioPlayerStatus.Idle) {
-				(oldState.resource as AudioResource<Track>).metadata.onFinish()
+				this.onFinish((oldState.resource as AudioResource<Track>).metadata);
 				this.processQueue();
 			}
 		})
 
 		this.audioPlayer.on(AudioPlayerStatus.Playing, (_oldState, newState) => {
-			(newState.resource as AudioResource<Track>).metadata.onStart();
+			this.onStart((newState.resource as AudioResource<Track>).metadata)
 		})
 
-		this.audioPlayer.on('error', (error) =>
-			(error.resource as AudioResource<Track>).metadata.onError(error),
-		);
+		this.audioPlayer.on('error', (error) => {
+			this.onError((error.resource as AudioResource<Track>).metadata, error);
+		});
 
 		voiceConnection.subscribe(this.audioPlayer);
 	}
@@ -166,9 +175,30 @@ export class MusicSubscription {
 			this.queueLock = false;
 		} catch (error) {
 			// If an error occurred, try the next item of the queue instead
-			nextTrack.onError(error as Error);
+			this.onError(nextTrack, error as Error)
 			this.queueLock = false;
 			return this.processQueue();
 		}
+	}
+
+	async onStart(metadata: Track) {
+		this.nowPlayingMessage = await this.updates.send({
+			content: "Now Playing",
+			embeds: [await metadata.generateEmbed()]
+		})
+	}
+
+	async onFinish(metadata: Track) {
+		if (this.nowPlayingMessage?.deletable) {
+			await this.nowPlayingMessage?.delete()
+		}
+	}
+
+	async onError(metadata: Track, error: Error) {
+		console.warn(error)
+		if (this.nowPlayingMessage?.deletable) {
+			await this.nowPlayingMessage?.delete()
+		}
+		await this.updates.send(`An error occurred playing \`${Util.escapeMarkdown(metadata.info.name)}\``)
 	}
 }

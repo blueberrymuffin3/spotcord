@@ -16,7 +16,7 @@ const spotifyClient = new SpotifyWebApi({
 
 const REFRESH_ON_REMAINING = 600;
 export let setupSpotifyClient = async () => {
-    setupSpotifyClient = async () => {}
+    setupSpotifyClient = async () => { }
     await refreshAccessToken()
 }
 
@@ -32,9 +32,9 @@ async function refreshAccessToken() {
     setTimeout(refreshAccessToken, (body.expires_in - REFRESH_ON_REMAINING) * 1000).unref()
 }
 
-export async function search(query: string) {
+export async function search(query: string, types: Array<string>, limit = 30) {
     await setupSpotifyClient()
-    const { body } = await spotifyClient.search(query, ['track', 'album', 'playlist'])
+    const { body } = await spotifyClient.search(query, types as any, { limit })
     for (const track of body.tracks?.items || []) {
         trackCacheSimple.set(track.id, track)
     }

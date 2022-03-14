@@ -13,9 +13,6 @@ interface TrackData {
 	info: SpotifyApi.TrackObjectSimplified
 	user: User
 	infoFull?: SpotifyApi.TrackObjectFull
-	onStart: () => void
-	onFinish: () => void
-	onError: (error: Error) => void
 }
 
 const noop = () => { };
@@ -23,17 +20,11 @@ const noop = () => { };
 export class Track implements TrackData {
 	public readonly info: SpotifyApi.TrackObjectSimplified
 	public readonly user: User;
-	public readonly onStart: () => void
-	public readonly onFinish: () => void
-	public readonly onError: (error: Error) => void
 	private headRequest?: Promise<Response>
 
-	private constructor({ info, user, onStart, onFinish, onError }: TrackData) {
+	private constructor({ info, user }: TrackData) {
 		this.info = info;
 		this.user = user;
-		this.onStart = onStart;
-		this.onFinish = onFinish;
-		this.onError = onError;
 	}
 
 	/**
@@ -58,25 +49,9 @@ export class Track implements TrackData {
 	 *
 	 * @returns The created Track
 	 */
-	public static async from(trackId: string, user: User, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Promise<Track> {
-		// The methods are wrapped so that we can ensure that they are only called once.
-		const wrappedMethods = {
-			onStart() {
-				wrappedMethods.onStart = noop;
-				methods.onStart();
-			},
-			onFinish() {
-				wrappedMethods.onFinish = noop;
-				methods.onFinish();
-			},
-			onError(error: Error) {
-				wrappedMethods.onError = noop;
-				methods.onError(error);
-			},
-		};
-
+	public static async from(trackId: string, user: User): Promise<Track> {
 		const info = await spotify.getTrackSimple(trackId)
-		return new Track({ info, user, ...wrappedMethods });
+		return new Track({ info, user });
 	}
 
 	private static getArt(infoFull: SpotifyApi.TrackObjectFull): string | null {
