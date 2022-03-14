@@ -76,6 +76,7 @@ class Downloader():
                 ffmpeg_process: subprocess.Popen = (
                     ffmpeg
                     .input("pipe:")
+                    .filter("volume", volume="-20dB")
                     .output(tempfile, **FFMPEG_ARGS_OUT)
                     .global_args("-hide_banner", "-loglevel", "error")
                     .run_async(pipe_stdin=True)
