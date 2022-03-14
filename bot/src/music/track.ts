@@ -4,7 +4,7 @@ import * as spotify from '../spotify-api.js';
 import { Readable } from 'node:stream'
 import { Embed } from '@discordjs/builders';
 import { formatDurationMs } from '../util.js';
-import { User } from 'discord.js';
+import { User, Util } from 'discord.js';
 
 /**
  * This is the data required to create a Track object.
@@ -102,6 +102,17 @@ export class Track implements TrackData {
 				iconURL: "https://cdn.discordapp.com/attachments/950635812628869150/950635979490856980/Spotify_Icon_RGB_Green.png"
 			})
 			.toJSON()
+	}
+
+	public generateInlineName() {
+		let name = "`" + Util.escapeInlineCode(this.info.name) + "`"
+		let artists = "`" + Util.escapeInlineCode(
+			this.info.artists
+				.map(artist => artist.name)
+				.join(', ')
+		) + "`"
+
+		return `${name} by ${artists}`
 	}
 
 	private static getUrl(trackId: string): string {

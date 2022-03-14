@@ -12,7 +12,7 @@ import {
 } from '@discordjs/voice';
 import type { Track } from './track';
 import { promisify } from 'node:util';
-import { Message, Snowflake, TextBasedChannel, Util, VoiceBasedChannel } from 'discord.js';
+import { Message, Snowflake, TextBasedChannel, VoiceBasedChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
 const subscriptions = new Map<Snowflake, MusicSubscription>();
@@ -31,6 +31,7 @@ export function getSubscription(
 				channelId: createIn.id,
 				adapterCreator: createIn.guild.voiceAdapterCreator,
 			}),
+			createIn.id,
 			updatesTo!
 		);
 		subscription.voiceConnection.on('error', console.warn);
@@ -49,11 +50,13 @@ export class MusicSubscription {
 	public queue: Track[];
 	public queueLock = false;
 	public readyLock = false;
+	private voiceChannelId: Snowflake
 	private updates: TextBasedChannel
 	private nowPlayingMessage: Message | undefined
 
-	public constructor(voiceConnection: VoiceConnection, updates: TextBasedChannel) {
+	public constructor(voiceConnection: VoiceConnection, voiceChannelId: Snowflake, updates: TextBasedChannel) {
 		this.voiceConnection = voiceConnection;
+		this.voiceChannelId = voiceChannelId;
 		this.updates = updates;
 		this.audioPlayer = createAudioPlayer();
 		this.queue = [];
@@ -183,7 +186,7 @@ export class MusicSubscription {
 
 	async onStart(metadata: Track) {
 		this.nowPlayingMessage = await this.updates.send({
-			content: "Now Playing",
+			content: `Now Playing in <#${this.voiceChannelId}>`,
 			embeds: [await metadata.generateEmbed()]
 		})
 	}
@@ -199,6 +202,6 @@ export class MusicSubscription {
 		if (this.nowPlayingMessage?.deletable) {
 			await this.nowPlayingMessage?.delete()
 		}
-		await this.updates.send(`An error occurred playing \`${Util.escapeMarkdown(metadata.info.name)}\``)
+		await this.updates.send(`An error occurred playing ${metadata.generateInlineName()}`)
 	}
 }
