@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { AudioResource, createAudioResource, StreamType } from '@discordjs/voice';
 import fetch, { Response } from 'node-fetch';
 import * as spotify from '../spotify-api.js';
@@ -105,14 +106,15 @@ export class Track implements TrackData {
 	}
 
 	public generateInlineName() {
-		let name = "`" + Util.escapeInlineCode(this.info.name) + "`"
-		let artists = "`" + Util.escapeInlineCode(
-			this.info.artists
-				.map(artist => artist.name)
-				.join(', ')
-		) + "`"
+		return t('generic.song_inline', this.info)
+		// let name = "`" + Util.escapeInlineCode(this.info.name) + "`"
+		// let artists = "`" + Util.escapeInlineCode(
+		// 	this.info.artists
+		// 		.map(artist => artist.name)
+		// 		.join(', ')
+		// ) + "`"
 
-		return `${name} by ${artists}`
+		// return `${name} by ${artists}`
 	}
 
 	private static getUrl(trackId: string): string {

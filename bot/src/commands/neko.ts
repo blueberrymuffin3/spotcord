@@ -1,10 +1,11 @@
+import { t } from 'i18next';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import fetch from 'node-fetch';
 
 export const data = new SlashCommandBuilder()
     .setName('neko')
-    .setDescription('Fetch an image of a catgirl! Nya〜');
+    .setDescription(t('command.neko.description'));
 
 export async function execute(interaction: CommandInteraction) {
     await interaction.deferReply();

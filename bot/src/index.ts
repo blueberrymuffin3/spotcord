@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config()
 
+import './i18n.js'
+
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;

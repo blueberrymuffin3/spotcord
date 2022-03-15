@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, GuildMember, Util } from 'discord.js';
 import { Track } from '../music/track.js';
@@ -7,9 +8,9 @@ import * as spotify from '../spotify-api.js';
 
 export const data = new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play a song from spotify')
+    .setDescription(t('command.play.description'))
     .addStringOption(option => option.setName('query')
-        .setDescription('Song to play')
+        .setDescription(t('command.play.option.query.description'))
         .setRequired(true)
     );
 
@@ -22,14 +23,14 @@ export async function execute(interaction: CommandInteraction) {
 
     if (results.tracks?.items.length == 0) {
         interaction.reply({
-            content: `No results found for query \`${Util.escapeInlineCode(query)}\``,
+            content: t('error.query_no_results_for', { query }),
             ephemeral: true
         })
     } else {
         let subscription = getSubscription(interaction.guildId, true, interaction.member.voice.channel, interaction.channel)
         if (!subscription) {
             await interaction.reply({
-                content: 'Join a voice channel and then try that again!',
+                content: t('error.user_not_connected'),
                 ephemeral: true
             });
             return;
@@ -37,6 +38,6 @@ export async function execute(interaction: CommandInteraction) {
 
         const track = await Track.from(results.tracks!.items[0].id, interaction.user);
         subscription.enqueue(track);
-        interaction.reply(`${track.generateInlineName()} added to queue`)
+        interaction.reply(t('generic.song_added_to_queue', track.info))
     }
 }

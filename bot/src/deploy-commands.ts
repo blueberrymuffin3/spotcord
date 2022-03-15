@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config()
 
+import './i18n.js'
+
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { readdirSync } from 'node:fs';

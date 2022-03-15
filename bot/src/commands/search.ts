@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, GuildMember, Message, MessageActionRow, MessageSelectMenu, SelectMenuInteraction, Util } from 'discord.js';
 import { formatDurationMs, formatPlural, truncateEllipses } from '../util.js';
@@ -6,6 +7,7 @@ import { Track } from '../music/track.js';
 import { entersState, VoiceConnectionStatus } from '@discordjs/voice';
 import { getSubscription } from '../music/subscription.js';
 import * as spotify from '../spotify-api.js';
+import { formatArtists } from '../i18n.js';
 
 const customIdSelectSearchResultTrack = "select_search_result_track";
 const customIdSelectSearchResultAlbum = "select_search_result_album";
@@ -18,9 +20,9 @@ const TRUNCATE_LENGTH_LONG = 100
 
 export const data = new SlashCommandBuilder()
     .setName('search')
-    .setDescription('Search spotify for a song, album, or playlist')
+    .setDescription(t('command.search.description'))
     .addStringOption(option => option.setName('query')
-        .setDescription('What to search for')
+        .setDescription(t('command.search.option.query.description'))
         .setRequired(true)
     );
 
@@ -39,10 +41,7 @@ export async function execute(interaction: CommandInteraction) {
             .addOptions(results.tracks!.items
                 .slice(0, 25)
                 .map(track => {
-                    let artists = track.artists
-                        .map(artist => artist.name)
-                        .join(', ')
-
+                    let artists = formatArtists(track.artists)
                     let explicit = track.explicit ? '[explicit] ' : ''
                     let duration = formatDurationMs(track.duration_ms)
 
