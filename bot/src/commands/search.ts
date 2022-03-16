@@ -57,7 +57,7 @@ export async function execute(interaction: CommandInteraction) {
                     label: t('command.search.response.albums.label', album),
                     description: t('command.search.response.albums.description', album),
                     value: album.id,
-                    emoji: EMOJI_ALBUM 
+                    emoji: EMOJI_ALBUM
                 }))
             )
         )
@@ -73,7 +73,7 @@ export async function execute(interaction: CommandInteraction) {
                     label: t('command.search.response.playlists.label', playlist),
                     description: t('command.search.response.playlists.description', playlist),
                     value: playlist.id,
-                    emoji: EMOJI_PLAYLIST 
+                    emoji: EMOJI_PLAYLIST
                 }))
             )
         )
@@ -129,7 +129,10 @@ export async function interact(interaction: SelectMenuInteraction) {
             try {
                 const track = await Track.from(trackId, interaction.user);
                 subscription.enqueue(track);
-                updateAndClear(t('generic.song_added_to_queue', track.info))
+                await Promise.all([
+                    updateAndClear(t('command.search.response.success', track.info)),
+                    interaction.reply(t('generic.song_added_to_queue', track.info))
+                ])
             } catch (error) {
                 console.warn(error);
                 await interaction.followUp(t('error.track_play'));

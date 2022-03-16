@@ -5,7 +5,7 @@ import * as spotify from '../spotify-api.js';
 import { Readable } from 'node:stream'
 import { Embed } from '@discordjs/builders';
 import { formatDurationMs } from '../util.js';
-import { User, Util } from 'discord.js';
+import { User } from 'discord.js';
 
 /**
  * This is the data required to create a Track object.
@@ -15,8 +15,6 @@ interface TrackData {
 	user: User
 	infoFull?: SpotifyApi.TrackObjectFull
 }
-
-const noop = () => { };
 
 export class Track implements TrackData {
 	public readonly info: SpotifyApi.TrackObjectSimplified

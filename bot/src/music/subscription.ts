@@ -16,6 +16,7 @@ import { promisify } from 'node:util';
 import { Message, Snowflake, TextBasedChannel, VoiceBasedChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
+let allowNewSubscriptions = true;
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 
 export function getSubscription(
@@ -25,7 +26,7 @@ export function getSubscription(
 	updatesTo: TextBasedChannel | null = null
 ) {
 	let subscription = subscriptions.get(guildId)
-	if (!subscription && createIfNotExist && createIn) {
+	if (!subscription && createIfNotExist && createIn && allowNewSubscriptions) {
 		subscription = new MusicSubscription(
 			joinVoiceChannel({
 				guildId: guildId,
@@ -41,6 +42,12 @@ export function getSubscription(
 	return subscription
 }
 
+function* mapIter<T, U>(iterable: IterableIterator<T>, callback: (x: T) => U) {
+	for (let x of iterable) {
+		yield callback(x)
+	}
+}
+
 /**
  * A MusicSubscription exists for each active VoiceConnection. Each subscription has its own audio player and queue,
  * and it also attaches logic to the audio player and voice connection for error handling and reconnection logic.
@@ -54,6 +61,20 @@ export class MusicSubscription {
 	private voiceChannelId: Snowflake
 	private updates: TextBasedChannel
 	private nowPlayingMessage: Message | undefined
+
+	static async closeAllSubscriptions() {
+		// Ensures all nowPlaying messages are deleted before the bot exits
+		// TODO: There's gotta be a better way to do this
+		allowNewSubscriptions = false
+		await Promise.all(
+			mapIter(subscriptions.values(), async subscription => {
+				if (subscription.nowPlayingMessage?.deletable) {
+					await subscription.nowPlayingMessage?.delete()?.catch(() => { })
+					subscription.voiceConnection.destroy()
+				}
+			})
+		)
+	}
 
 	public constructor(voiceConnection: VoiceConnection, voiceChannelId: Snowflake, updates: TextBasedChannel) {
 		this.voiceConnection = voiceConnection;
@@ -156,7 +177,7 @@ export class MusicSubscription {
 	public stop() {
 		this.queueLock = true;
 		this.queue = [];
-		this.audioPlayer.stop(true);
+		this.audioPlayer.stop();
 	}
 
 	/**
@@ -195,6 +216,7 @@ export class MusicSubscription {
 	async onFinish(track: Track) {
 		if (this.nowPlayingMessage?.deletable) {
 			await this.nowPlayingMessage?.delete()
+			this.nowPlayingMessage = undefined
 		}
 	}
 

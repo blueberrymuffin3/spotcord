@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, GuildMember, Util } from 'discord.js';
+import { CommandInteraction, GuildMember } from 'discord.js';
 import { Track } from '../music/track.js';
 import { getSubscription } from '../music/subscription.js';
 import * as spotify from '../spotify-api.js';

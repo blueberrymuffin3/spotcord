@@ -6,6 +6,7 @@ import './i18n.js'
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
 import { isProd } from './util.js';
+import { MusicSubscription } from './music/subscription.js';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
@@ -62,12 +63,18 @@ client.on('interactionCreate', async interaction => {
 			await command.interact(interaction);
 		} catch (error) {
 			console.error(error);
+			if (interaction.replied || interaction.deferred) {
+				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			} else {
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			}
 		}
 	}
 });
 
-const shutdown = (signal: string) => {
+const shutdown = async (signal: string) => {
 	console.log(`Shutting down due to ${signal}...`)
+	await MusicSubscription.closeAllSubscriptions()
 	client.destroy();
 	console.log(`Done shutting down`)
 }

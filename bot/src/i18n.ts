@@ -2,10 +2,11 @@ import { Util } from 'discord.js';
 import { decode as decodeHTMLEntity } from 'html-entities';
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
+import { isProd } from './util.js';
 
 await i18next.use(Backend).init({
     lng: "en",
-    debug: true,
+    debug: !isProd(),
     backend: {
         loadPath: 'locales/{{lng}}/{{ns}}.yaml'
     },
@@ -15,8 +16,8 @@ await i18next.use(Backend).init({
     }
 });
 
-const formatInlineBlock = (value: string) => {
-    return "`" + Util.escapeInlineCode(value) + "`"
+const formatInlineBlock = (value: string | undefined) => {
+    return "`" + Util.escapeInlineCode(value || 'undefined') + "`"
 }
 
 i18next.services.formatter?.add('inline_block', formatInlineBlock)
