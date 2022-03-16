@@ -14,29 +14,35 @@ spec:
         app: bot
     spec:
       initContainers:
-      - name: deploy-commands
-        image: registry.appjackstudio.com/spotcord/bot
-        command:
-          - node
-          - dist/deploy-commands.js
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "1500m"
-        envFrom:
-          - configMapRef:
-              name: bot-env-config
-          - secretRef:
-              name: bot-env-secret
+        - name: deploy-commands
+          image: ghcr.io/bmxguy100/spotcord-bot
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          command:
+            - node
+            - dist/deploy-commands.js
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "1500m"
+          envFrom:
+            - configMapRef:
+                name: bot-env-config
+            - secretRef:
+                name: bot-env-secret
       containers:
-      - name: bot
-        image: registry.appjackstudio.com/spotcord/bot
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "1500m"
-        envFrom:
-          - configMapRef:
-              name: bot-env-config
-          - secretRef:
-              name: bot-env-secret
+        - name: bot
+          image: ghcr.io/bmxguy100/spotcord-bot
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "1500m"
+          envFrom:
+            - configMapRef:
+                name: bot-env-config
+            - secretRef:
+                name: bot-env-secret

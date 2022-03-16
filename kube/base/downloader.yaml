@@ -13,7 +13,10 @@ spec:
     spec:
       containers:
         - name: downloader
-          image: registry.appjackstudio.com/spotcord/downloader
+          image: ghcr.io/bmxguy100/spotcord-downloader
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           resources:
             limits:
               memory: "256Mi"
@@ -24,6 +27,8 @@ spec:
               readOnly: true
             - name: cache
               mountPath: /cache
+            - name: temp
+              mountPath: /tmp
           ports:
             - name: http
               containerPort: 5000
@@ -37,6 +42,10 @@ spec:
         - name: secret
           secret:
             secretName: downloader-credentials
+        - name: temp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
         - name: cache
           emptyDir:
             sizeLimit: 5Gi
