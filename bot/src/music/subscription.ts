@@ -185,24 +185,24 @@ export class MusicSubscription {
 		}
 	}
 
-	async onStart(metadata: Track) {
+	async onStart(track: Track) {
 		this.nowPlayingMessage = await this.updates.send({
 			content: `Now Playing in <#${this.voiceChannelId}>`,
-			embeds: [await metadata.generateEmbed()]
+			embeds: [await track.generateEmbed()]
 		})
 	}
 
-	async onFinish(metadata: Track) {
+	async onFinish(track: Track) {
 		if (this.nowPlayingMessage?.deletable) {
 			await this.nowPlayingMessage?.delete()
 		}
 	}
 
-	async onError(metadata: Track, error: Error) {
+	async onError(track: Track, error: Error) {
 		console.warn(error)
 		if (this.nowPlayingMessage?.deletable) {
 			await this.nowPlayingMessage?.delete()
 		}
-		await this.updates.send(`An error occurred playing ${t('generic.song_inline', metadata)}`)
+		await this.updates.send(`An error occurred playing ${t('generic.song_inline', track.info)}`)
 	}
 }
