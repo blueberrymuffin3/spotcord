@@ -4,7 +4,6 @@ error:
   query_no_results_for: No results found for {{query, inline_block}}
   join_timeout: Failed to join voice channel, please try again later!
   track_play: Failed to play track, please try again later!
-  track_playing: Failed to play track, please try again later!
 
 generic:
   song_inline: "{{name, inline_block}} by {{artists, artists, inline_block}}"

@@ -129,10 +129,8 @@ export async function interact(interaction: SelectMenuInteraction) {
             try {
                 const track = await Track.from(trackId, interaction.user);
                 subscription.enqueue(track);
-                await Promise.all([
-                    updateAndClear(t('command.search.response.success', track.info)),
-                    interaction.reply(t('generic.song_added_to_queue', track.info))
-                ])
+                await updateAndClear(t('command.search.response.success', track.info))
+                await interaction.followUp(t('generic.song_added_to_queue', track.info))
             } catch (error) {
                 console.warn(error);
                 await interaction.followUp(t('error.track_play'));

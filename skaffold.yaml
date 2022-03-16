@@ -4,23 +4,25 @@ metadata:
   name: spotcord
 build:
   artifacts:
-  - image: registry.appjackstudio.com/spotcord/downloader
+  - image: ghcr.io/bmxguy100/spotcord-downloader
     context: downloader
     docker:
       dockerfile: Dockerfile
-  - image: registry.appjackstudio.com/spotcord/bot
+  - image: ghcr.io/bmxguy100/spotcord-bot
     context: bot
     docker:
       dockerfile: Dockerfile
   local:
     useBuildkit: true
 
-deploy:
+profiles:
+- name: dev
+  activation:
+    - command: dev
+  deploy:
     kustomize:
       paths:
       - kube/dev
-  
-profiles:
 - name: prod
   deploy:
     kustomize:
