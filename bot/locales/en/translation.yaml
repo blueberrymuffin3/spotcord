@@ -13,13 +13,13 @@ generic:
 item:
   track_one: track
   track_other: tracks
-  track_count: "{{count, intlNumber}} $t(item.track)"
+  track_count: "{{count, number}} $t(item.track)"
   album_one: album
   album_other: albums
-  album_count: "{{count, intlNumber}} $t(item.album)"
+  album_count: "{{count, number}} $t(item.album)"
   playlist_one: playlist
   playlist_other: playlists
-  playlist_count: "{{count, intlNumber}} $t(item.playlist)"
+  playlist_count: "{{count, number}} $t(item.playlist)"
 
 command:
   ping:
@@ -66,3 +66,4 @@ command:
         placeholder: $t(item.playlist_count) found
         label: '{{name, truncate_ellipses(max_length: 40)}} [$t(item.track_count, {"count": {{tracks.total}} })]'
         description: '{{description, decode_entity, truncate_ellipses(max_length: 100)}}'
+      success: Song added to queue
