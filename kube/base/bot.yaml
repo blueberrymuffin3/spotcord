@@ -24,8 +24,10 @@ spec:
             memory: "128Mi"
             cpu: "1500m"
         envFrom:
+          - configMapRef:
+              name: bot-env-config
           - secretRef:
-              name: bot-env
+              name: bot-env-secret
       containers:
       - name: bot
         image: registry.appjackstudio.com/spotcord/bot
@@ -34,5 +36,7 @@ spec:
             memory: "128Mi"
             cpu: "1500m"
         envFrom:
+          - configMapRef:
+              name: bot-env-config
           - secretRef:
-              name: bot-env
+              name: bot-env-secret

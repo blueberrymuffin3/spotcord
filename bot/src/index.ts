@@ -5,6 +5,7 @@ import './i18n.js'
 
 import { Client, Intents } from 'discord.js';
 import { readdirSync } from 'node:fs';
+import { isProd } from './util.js';
 const { DISCORD_TOKEN } = process.env as Record<string, string>;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
@@ -31,7 +32,7 @@ client.once('ready', () => {
 		status: 'online',
 		activities: [{
 			type: 'LISTENING',
-			name: 'Spotify'
+			name: isProd() ? 'Spotify' : 'Spotify (dev)'
 		}]
 	})
 });

@@ -1,6 +1,4 @@
-namespace: spotcord
 resources:
-- namespace.yaml
 - secrets.yaml
 - downloader.yaml
 - bot.yaml

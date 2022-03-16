@@ -18,3 +18,7 @@ export function formatPlural(count: number, plural: string, singular: string){
         return `${count.toLocaleString('en-US')} ${plural}`;
     }
 }
+
+export function isProd() {
+    return process.env.BOT_ENV == 'PROD'
+}

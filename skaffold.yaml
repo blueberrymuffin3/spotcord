@@ -14,7 +14,15 @@ build:
       dockerfile: Dockerfile
   local:
     useBuildkit: true
+
 deploy:
-  kustomize:
-    paths:
-    - kube
+    kustomize:
+      paths:
+      - kube/dev
+  
+profiles:
+- name: prod
+  deploy:
+    kustomize:
+      paths:
+      - kube/prod

@@ -1,0 +1,12 @@
+namespace: spotcord-dev
+bases:
+  - ../base
+
+resources:
+  - namespace.yaml
+  - bot-env-secret.yaml
+
+configMapGenerator:
+  - envs:
+      - .env
+    name: bot-env-config
