@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import {
 	AudioPlayer,
 	AudioPlayerStatus,
@@ -202,6 +203,6 @@ export class MusicSubscription {
 		if (this.nowPlayingMessage?.deletable) {
 			await this.nowPlayingMessage?.delete()
 		}
-		await this.updates.send(`An error occurred playing ${metadata.generateInlineName()}`)
+		await this.updates.send(`An error occurred playing ${t('generic.song_inline', this.metadata)}`)
 	}
 }

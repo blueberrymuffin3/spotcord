@@ -71,13 +71,14 @@ export class Track implements TrackData {
 			.join(", ")
 	}
 
+	// TODO: use i18next for this
 	public async generateEmbed() {
 		let infoFull = await spotify.getTrackFull(this.info.id)
 
 		return new Embed()
 			.setColor(0x1DB954)
 			.setTitle(infoFull.name)
-			.setThumbnail(await Track.getArt(infoFull))
+			.setThumbnail(Track.getArt(infoFull))
 			.addField({
 				name: infoFull.artists.length > 1 ? "Artists" : "Artist",
 				value: Track.getArtistsString(infoFull.artists),
@@ -103,18 +104,6 @@ export class Track implements TrackData {
 				iconURL: "https://cdn.discordapp.com/attachments/950635812628869150/950635979490856980/Spotify_Icon_RGB_Green.png"
 			})
 			.toJSON()
-	}
-
-	public generateInlineName() {
-		return t('generic.song_inline', this.info)
-		// let name = "`" + Util.escapeInlineCode(this.info.name) + "`"
-		// let artists = "`" + Util.escapeInlineCode(
-		// 	this.info.artists
-		// 		.map(artist => artist.name)
-		// 		.join(', ')
-		// ) + "`"
-
-		// return `${name} by ${artists}`
 	}
 
 	private static getUrl(trackId: string): string {

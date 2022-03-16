@@ -1,22 +1,18 @@
 import { t } from 'i18next';
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, GuildMember, Message, MessageActionRow, MessageSelectMenu, SelectMenuInteraction, Util } from 'discord.js';
-import { formatDurationMs, formatPlural, truncateEllipses } from '../util.js';
-import { decode as decodeEntity } from 'html-entities';
+import { CommandInteraction, GuildMember, MessageActionRow, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
 import { Track } from '../music/track.js';
 import { entersState, VoiceConnectionStatus } from '@discordjs/voice';
 import { getSubscription } from '../music/subscription.js';
 import * as spotify from '../spotify-api.js';
-import { formatArtists } from '../i18n.js';
 
 const customIdSelectSearchResultTrack = "select_search_result_track";
 const customIdSelectSearchResultAlbum = "select_search_result_album";
 const customIdSelectSearchResultPlaylist = "select_search_result_playlist";
-const EMOJI_TRACk = "%F0%9F%8E%B5"; // :musical_note:
+const EMOJI_TRACK = "%F0%9F%8E%B5"; // :musical_note:
+const EMOJI_TRACK_EXPLICIT = "%E2%9A%A0%EF%B8%8F"; // :warning:
 const EMOJI_ALBUM = "%F0%9F%92%BD"; // :minidisk:
 const EMOJI_PLAYLIST = "%F0%9F%93%9C"; // :scroll:
-const TRUNCATE_LENGTH = 50
-const TRUNCATE_LENGTH_LONG = 100
 
 export const data = new SlashCommandBuilder()
     .setName('search')
@@ -26,88 +22,71 @@ export const data = new SlashCommandBuilder()
         .setRequired(true)
     );
 
+type SearchCommandResponse = SpotifyApi.TrackSearchResponse & SpotifyApi.AlbumSearchResponse & SpotifyApi.PlaylistSearchResponse
+
 export async function execute(interaction: CommandInteraction) {
     let query = interaction.options.getString("query") as string
-    let results = await spotify.search(query, ['track', 'album', 'playlist'], 25)
-
+    let results = await spotify.search(query, ['track', 'album', 'playlist'], 25) as SearchCommandResponse
     const menus: MessageSelectMenu[] = []
 
-    console.log(`Got results for "${query}" with ${results.tracks?.total} tracks, ${results.albums?.total} albums, and ${results.playlists?.total} playlists`)
+    console.log(`Got results for "${query}" with ${results.tracks.total} tracks, ${results.albums.total} albums, and ${results.playlists.total} playlists`)
 
-    if (results.tracks!.items.length > 0) {
+    if (results.tracks.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultTrack)
-            .setPlaceholder(`${formatPlural(results.tracks!.total, 'tracks', 'track')} found`)
-            .addOptions(results.tracks!.items
+            .setPlaceholder(t('command.search.response.tracks.placeholder', { count: results.tracks.total }))
+            .addOptions(results.tracks.items
                 .slice(0, 25)
-                .map(track => {
-                    let artists = formatArtists(track.artists)
-                    let explicit = track.explicit ? '[explicit] ' : ''
-                    let duration = formatDurationMs(track.duration_ms)
-
-                    return {
-                        label: `${truncateEllipses(track.name, TRUNCATE_LENGTH - 8)} [${duration}]`,
-                        description: truncateEllipses(`${explicit}${artists}`, TRUNCATE_LENGTH_LONG),
-                        value: track.id,
-                        emoji: EMOJI_TRACk
-                    }
-                })
+                .map(track => ({
+                    label: t('command.search.response.tracks.label', track),
+                    description: t('command.search.response.tracks.description', track),
+                    value: track.id,
+                    emoji: track.explicit ? EMOJI_TRACK_EXPLICIT : EMOJI_TRACK
+                }))
             )
         )
     }
 
-    if (results.albums!.items.length > 0) {
+    if (results.albums.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultAlbum)
-            .setPlaceholder(`${formatPlural(results.albums!.total, 'albums', 'album')} found`)
-            .addOptions(results.albums!.items
+            .setPlaceholder(t('command.search.response.albums.placeholder', { count: results.albums.total }))
+            .addOptions(results.albums.items
                 .slice(0, 25)
-                .map(album => {
-                    let artists = album.artists
-                        .map(artist => artist.name)
-                        .join(', ')
-
-                    return {
-                        label: `${truncateEllipses(album.name, TRUNCATE_LENGTH - 11)} [${formatPlural(album.total_tracks, 'tracks', 'track')}]`,
-                        description: truncateEllipses(artists, TRUNCATE_LENGTH_LONG),
-                        value: album.id,
-                        emoji: EMOJI_ALBUM
-                    }
-                })
+                .map(album => ({
+                    label: t('command.search.response.albums.label', album),
+                    description: t('command.search.response.albums.description', album),
+                    value: album.id,
+                    emoji: EMOJI_ALBUM 
+                }))
             )
         )
     }
 
-    if (results.playlists!.items.length > 0) {
+    if (results.playlists.items.length > 0) {
         menus.push(new MessageSelectMenu()
             .setCustomId(customIdSelectSearchResultPlaylist)
-            .setPlaceholder(`${formatPlural(results.playlists!.total, 'playlists', 'playlist')} found`)
-            .addOptions(results.playlists!.items
+            .setPlaceholder(t('command.search.response.playlists.placeholder', { count: results.playlists.total }))
+            .addOptions(results.playlists.items
                 .slice(0, 25)
-                .map(playlist => {
-                    let description = playlist.description || ''
-                    description = decodeEntity(description, { scope: 'strict' })
-                    description = truncateEllipses(description, TRUNCATE_LENGTH_LONG)
-
-                    return {
-                        label: `${truncateEllipses(playlist.name, TRUNCATE_LENGTH - 11)} [${formatPlural(playlist.tracks.total, 'tracks', 'track')}]`,
-                        description: description,
-                        value: playlist.id,
-                        emoji: EMOJI_PLAYLIST
-                    }
-                })
+                .map(playlist => ({
+                    label: t('command.search.response.playlists.label', playlist),
+                    description: t('command.search.response.playlists.description', playlist),
+                    value: playlist.id,
+                    emoji: EMOJI_PLAYLIST 
+                }))
             )
         )
     }
 
     if (menus.length == 0) {
         interaction.reply({
-            content: `No results found for query \`${Util.escapeInlineCode(query)}\``,
+            content: t('error.query_no_results_for', { query }),
             ephemeral: true
         })
     } else {
         await interaction.reply({
-            content: `Results for query \`${Util.escapeInlineCode(query)}\``,
+            content: t('command.search.response.content', { query }),
             components: menus.map(menu => new MessageActionRow().addComponents(menu)),
             ephemeral: true
         })
@@ -129,7 +108,7 @@ export async function interact(interaction: SelectMenuInteraction) {
     let subscription = getSubscription(interaction.guildId, true, interaction.member.voice.channel, interaction.channel)
 
     if (!subscription) {
-        await interaction.update('Join a voice channel and then try that again!');
+        await interaction.update(t('error.user_not_connected'));
         return;
     }
 
@@ -143,20 +122,17 @@ export async function interact(interaction: SelectMenuInteraction) {
                 await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
             } catch (error) {
                 console.warn(error);
-                await interaction.update('Failed to join voice channel within 20 seconds, please try again later!');
+                await interaction.update(t('error.join_timeout'));
                 return;
             }
 
             try {
-                let nowPlayingMessage: Message | undefined = undefined
-                // Attempt to create a Track from the user's video URL
                 const track = await Track.from(trackId, interaction.user);
-                // Enqueue the track and reply a success message to the user
                 subscription.enqueue(track);
-                updateAndClear(`${track.generateInlineName()} added to queue`)
+                updateAndClear(t('generic.song_added_to_queue', track.info))
             } catch (error) {
                 console.warn(error);
-                await interaction.followUp('Failed to play track, please try again later!');
+                await interaction.followUp(t('error.track_play'));
             }
             break;
         case customIdSelectSearchResultAlbum:

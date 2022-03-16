@@ -20,6 +20,6 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     subscription.voiceConnection.destroy()
-    await interaction.reply("Goodbye!")
+    await interaction.reply(t('command.leave.response'))
 }
 
