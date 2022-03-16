@@ -84,11 +84,11 @@ export class Track implements TrackData {
 				value: Track.getArtistsString(infoFull.artists),
 				inline: true
 			})
-			.addField({
-				name: "Album",
-				value: infoFull.album.name,
-				inline: true
-			})
+			// .addField({
+			// 	name: "Album",
+			// 	value: infoFull.album.name,
+			// 	inline: true
+			// })
 			.addField({
 				name: "Requested by",
 				value: this.user.toString(),
