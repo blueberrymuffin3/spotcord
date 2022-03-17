@@ -31,7 +31,7 @@ jobs:
         run: skaffold build -p prod --tag='v${{ github.run_number }}' --push
 
       - name: Update image digests
-        run: yq -i '.images[].newTag = v${{ github.run_number }}' kube/prod/kustomization.yaml
+        run: yq -i '.images[].newTag = "v${{ github.run_number }}"' kube/prod/kustomization.yaml
 
       # Note: pushes run from inside github actions do not cause an infinite loop
       - name: Commit and Push changes
