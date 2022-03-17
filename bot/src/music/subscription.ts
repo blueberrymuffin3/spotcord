@@ -68,10 +68,8 @@ export class MusicSubscription {
 		allowNewSubscriptions = false
 		await Promise.all(
 			mapIter(subscriptions.values(), async subscription => {
-				if (subscription.nowPlayingMessage?.deletable) {
-					await subscription.nowPlayingMessage?.delete()?.catch(() => { })
-					subscription.voiceConnection.destroy()
-				}
+				await subscription.deleteLastNowPlaying()?.catch(() => { })
+				subscription.voiceConnection.destroy()
 			})
 		)
 	}
@@ -226,5 +224,9 @@ export class MusicSubscription {
 			await this.nowPlayingMessage?.delete()
 		}
 		await this.updates.send(`An error occurred playing ${t('generic.song_inline', track.info)}`)
+	}
+
+	async deleteLastNowPlaying(){
+
 	}
 }
