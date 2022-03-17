@@ -19,17 +19,16 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install skaffold
+        run: |
+          sudo curl -Lo /usr/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
+          sudo chmod a+x /usr/bin/skaffold
+
       - name: Checkout sources
         uses: actions/checkout@v2
 
       - name: Build Docker images
-        uses: hiberbee/github-action-skaffold@1.12.0
-        with:
-          skaffold-version: v1.36.0
-          command: build
-          profile: prod
-          push: true
-          tag: v${{ github.run_number }}
+        run: skaffold build -p prod --tag='v${{ github.run_number }}' --push
 
       - name: Update image digests
         run: yq -i '.images[].newTag = v${{ github.run_number }}' kube/prod/kustomization.yaml

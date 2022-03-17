@@ -14,11 +14,11 @@ build:
       dockerfile: Dockerfile
   local:
     useBuildkit: true
-
+    concurrency: 0
 profiles:
 - name: dev
   activation:
-    - command: dev
+  - command: dev
   deploy:
     kustomize:
       paths:
