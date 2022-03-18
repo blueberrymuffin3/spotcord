@@ -19,6 +19,7 @@ export async function execute(interaction: CommandInteraction) {
         return
     }
 
+    await subscription.deleteLastNowPlaying()
     subscription.voiceConnection.destroy()
     await interaction.reply(t('command.leave.response'))
 }
