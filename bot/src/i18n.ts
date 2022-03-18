@@ -2,7 +2,8 @@ import { Util } from 'discord.js';
 import { decode as decodeHTMLEntity } from 'html-entities';
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
-import { isProd } from './util.js';
+
+const ELLIPSES = '\u2026'
 
 await i18next.use(Backend).init({
     lng: "en",
@@ -36,7 +37,12 @@ export const formatArtists = (artists: SpotifyApi.ArtistObjectSimplified[], lng 
 i18next.services.formatter?.add('artists', formatArtists)
 
 i18next.services.formatter?.add('truncate_ellipses', (message: string, _lng, { max_length }) => {
-    return message.length <= max_length ? message : message.slice(0, max_length - 3) + '\u2026'
+    const characters = [...message] // Needed to deal with surrogate codepoints and UCS-2
+    if(message.length <= max_length) {
+        return message
+    } else {
+        return characters.slice(0, max_length - 3) + ELLIPSES
+    }
 })
 
 i18next.services.formatter?.add('duration_ms', (value: string, _lng) => {
