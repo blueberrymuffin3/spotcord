@@ -55,8 +55,8 @@ i18next.services.formatter?.add('truncate_ellipses', (message: string, _lng, { m
 
 i18next.services.formatter?.add('duration_ms', (value: string, _lng) => {
     let duration = parseInt(value)
-    let seconds = Math.floor(duration / 1000) % 60
-    let minutes = Math.floor(duration / 60000).toString().padStart(2, '0')
+    let seconds = (Math.floor(duration / 1000) % 60).toString().padStart(2, '0')
+    let minutes = Math.floor(duration / 60000)
     return `${minutes}:${seconds}`
 })
 
