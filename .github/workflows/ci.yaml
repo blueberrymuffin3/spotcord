@@ -38,6 +38,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Update image tags
-          branch: release
           file_pattern: kube/prod/kustomization.yaml
-          push_options: "--force"
