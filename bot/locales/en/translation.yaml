@@ -13,8 +13,8 @@ generic:
   playlist_added_to_queue: '$t(item.track_count, {"count": {{tracks.total}} }) from the playlist {{name, inline_block}} added to the queue'
 
 item:
-  track_one: track
-  track_other: tracks
+  track_one: song
+  track_other: songs
   track_count: "{{count, number}} $t(item.track)"
   album_one: album
   album_other: albums
@@ -42,6 +42,19 @@ command:
   skip:
     description: Skips the current song
     response: Song skipped!
+
+  clear:
+    description: Clears all the songs in the queue
+    response:
+      empty: There queue is already empty
+      success: The queue has been cleared
+
+  queue:
+    description: Shows the current play queue
+    response:
+      empty: There are no songs in the queue
+      line: "{{index}}: {{name}} by {{artists, artists}} [{{duration_ms, duration_ms}}]"
+      more: 'and {{count}} more $t(item.track)…'
 
   play:
     description: Play a song from spotify

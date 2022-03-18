@@ -171,7 +171,7 @@ export async function interact(interaction: SelectMenuInteraction) {
                 await interaction.followUp(t('generic.playlist_added_to_queue', playlist))
             } catch (error) {
                 console.warn(error);
-                await interaction.followUp(t('error.track_play'));
+                await interaction.update(t('error.track_play'));
             }
             break;
         default:
