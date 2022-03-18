@@ -37,11 +37,19 @@ export const formatArtists = (artists: SpotifyApi.ArtistObjectSimplified[], lng 
 i18next.services.formatter?.add('artists', formatArtists)
 
 i18next.services.formatter?.add('truncate_ellipses', (message: string, _lng, { max_length }) => {
-    const characters = [...message] // Needed to deal with surrogate codepoints and UCS-2
+    const characters = [...message]
     if(message.length <= max_length) {
         return message
     } else {
-        return characters.slice(0, max_length - 3) + ELLIPSES
+        var finalMessage = ""
+        // Make sure not to split up any surrogate pairs
+        for (const char of characters){
+            if(finalMessage.length + char.length + ELLIPSES.length > max_length){
+                break
+            }
+            finalMessage += char
+        }
+        return finalMessage + ELLIPSES
     }
 })
 
