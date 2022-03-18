@@ -33,12 +33,11 @@ jobs:
       - name: Update image digests
         run: yq -i '.images[].newTag = "v${{ github.run_number }}"' kube/prod/kustomization.yaml
 
-      - name: Commit file
-        uses: swinton/commit@v2.x
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Note: pushes run from inside github actions do not cause an infinite loop
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          files: |
-            kube/prod/kustomization.yaml
-          commit-message: Update Image Tags
-          ref: refs/heads/release
+          commit_message: Update image tags
+          branch: release
+          file_pattern: kube/prod/kustomization.yaml
+          push_options: "--force"
