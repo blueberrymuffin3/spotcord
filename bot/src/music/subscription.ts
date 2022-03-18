@@ -196,6 +196,10 @@ export class MusicSubscription {
 			let resource = await nextTrack.createAudioResource();
 			this.audioPlayer.play(resource);
 			this.queueLock = false;
+
+			if (this.queue.length >= 1) {
+				void this.queue[0].prefetch()
+			}
 		} catch (error) {
 			// If an error occurred, try the next item of the queue instead
 			this.onError(nextTrack, error as Error)
@@ -212,21 +216,20 @@ export class MusicSubscription {
 	}
 
 	async onFinish(track: Track) {
-		if (this.nowPlayingMessage?.deletable) {
-			await this.nowPlayingMessage?.delete()
-			this.nowPlayingMessage = undefined
-		}
+		await this.deleteLastNowPlaying()
 	}
 
 	async onError(track: Track, error: Error) {
 		console.warn(error)
-		if (this.nowPlayingMessage?.deletable) {
-			await this.nowPlayingMessage?.delete()
-		}
+		await this.deleteLastNowPlaying()
 		await this.updates.send(`An error occurred playing ${t('generic.song_inline', track.info)}`)
 	}
 
-	async deleteLastNowPlaying(){
-
+	async deleteLastNowPlaying() {
+		if (this.nowPlayingMessage != null) {
+			const message = this.nowPlayingMessage
+			this.nowPlayingMessage = undefined
+			await message.delete()
+		}
 	}
 }

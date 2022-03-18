@@ -26,6 +26,11 @@ export class Track implements TrackData {
 		this.user = user;
 	}
 
+	public async prefetch() {
+		await fetch(Track.getUrl(this.info.id), { method: 'HEAD' });
+		console.log(`Prefetched ${this.info.id}`)
+	}
+
 	/**
 	 * Creates an AudioResource from this Track.
 	 */
