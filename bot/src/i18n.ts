@@ -6,7 +6,6 @@ import { isProd } from './util.js';
 
 await i18next.use(Backend).init({
     lng: "en",
-    debug: !isProd(),
     backend: {
         loadPath: 'locales/{{lng}}/{{ns}}.yaml'
     },
@@ -37,7 +36,7 @@ export const formatArtists = (artists: SpotifyApi.ArtistObjectSimplified[], lng 
 i18next.services.formatter?.add('artists', formatArtists)
 
 i18next.services.formatter?.add('truncate_ellipses', (message: string, _lng, { max_length }) => {
-    return message.length <= max_length ? message : message.substring(0, max_length - 3) + '\u2026'
+    return message.length <= max_length ? message : message.slice(0, max_length - 3) + '\u2026'
 })
 
 i18next.services.formatter?.add('duration_ms', (value: string, _lng) => {

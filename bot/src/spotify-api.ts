@@ -48,10 +48,30 @@ export async function getTrackFull(trackId: string) {
 }
 
 export async function getTrackSimple(trackId: string) {
-    let track = trackCacheSimple.get<SpotifyApi.TrackObjectFull>(trackId)
+    const track = trackCacheSimple.get<SpotifyApi.TrackObjectFull>(trackId)
     if (track == undefined) {
         return getTrackFull(trackId)
     }
     return track
 }
 
+export async function getAlbum(albumId: string) {
+    const { body } = await spotifyClient.getAlbum(albumId)
+
+    for (const track of body.tracks?.items || []) {
+        trackCacheSimple.set(track.id, track)
+    }
+
+    return body;
+}
+
+export async function getPlaylist(albumId: string) {
+    const { body } = await spotifyClient.getPlaylist(albumId)
+
+    for (const trackObject of body.tracks.items) {
+        if(trackObject.is_local) continue;
+        trackCacheSimple.set(trackObject.track.id, trackObject.track)
+    }
+
+    return body;
+}

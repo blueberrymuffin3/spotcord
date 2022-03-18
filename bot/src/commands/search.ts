@@ -25,6 +25,8 @@ export const data = new SlashCommandBuilder()
 type SearchCommandResponse = SpotifyApi.TrackSearchResponse & SpotifyApi.AlbumSearchResponse & SpotifyApi.PlaylistSearchResponse
 
 export async function execute(interaction: CommandInteraction) {
+    await interaction.deferReply({ephemeral: true})
+
     let query = interaction.options.getString("query") as string
     let results = await spotify.search(query, ['track', 'album', 'playlist'], 25) as SearchCommandResponse
     const menus: MessageSelectMenu[] = []
@@ -80,12 +82,12 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     if (menus.length == 0) {
-        interaction.reply({
+        interaction.followUp({
             content: t('error.query_no_results_for', { query }),
             ephemeral: true
         })
     } else {
-        await interaction.reply({
+        await interaction.followUp({
             content: t('command.search.response.content', { query }),
             components: menus.map(menu => new MessageActionRow().addComponents(menu)),
             ephemeral: true
@@ -112,24 +114,23 @@ export async function interact(interaction: SelectMenuInteraction) {
         return;
     }
 
+    // Make sure the connection is ready before processing the user's request
+    try {
+        await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
+    } catch (error) {
+        console.warn(error);
+        await interaction.update(t('error.join_timeout'));
+        return;
+    }
+
     switch (interaction.customId) {
         case customIdSelectSearchResultTrack:
-            // Extract the track id from the command
             const trackId = interaction.values[0];
-
-            // Make sure the connection is ready before processing the user's request
-            try {
-                await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
-            } catch (error) {
-                console.warn(error);
-                await interaction.update(t('error.join_timeout'));
-                return;
-            }
 
             try {
                 const track = await Track.from(trackId, interaction.user);
                 subscription.enqueue(track);
-                await updateAndClear(t('command.search.response.success', track.info))
+                await updateAndClear(t('command.search.response.tracks.success'))
                 await interaction.followUp(t('generic.song_added_to_queue', track.info))
             } catch (error) {
                 console.warn(error);
@@ -137,8 +138,41 @@ export async function interact(interaction: SelectMenuInteraction) {
             }
             break;
         case customIdSelectSearchResultAlbum:
+            const albumId = interaction.values[0];
+
+            try {
+                const album = await spotify.getAlbum(albumId)
+
+                for (const { id } of album.tracks.items) {
+                    const track = await Track.from(id, interaction.user);
+                    subscription.enqueue(track);
+                }
+
+                await updateAndClear(t('command.search.response.albums.success'))
+                await interaction.followUp(t('generic.album_added_to_queue', album))
+            } catch (error) {
+                console.warn(error);
+                await interaction.followUp(t('error.track_play'));
+            }
+            break;
         case customIdSelectSearchResultPlaylist:
-            await updateAndClear("Albums and playlists aren't supported yet, please wait")
+            const playlistId = interaction.values[0];
+
+            try {
+                const playlist = await spotify.getPlaylist(playlistId)
+
+                for (const trackObject of playlist.tracks.items) {
+                    if(trackObject.is_local) continue;
+                    const track = await Track.from(trackObject.track.id, interaction.user);
+                    subscription.enqueue(track);
+                }
+
+                await updateAndClear(t('command.search.response.playlists.success'))
+                await interaction.followUp(t('generic.playlist_added_to_queue', playlist))
+            } catch (error) {
+                console.warn(error);
+                await interaction.followUp(t('error.track_play'));
+            }
             break;
         default:
             throw new Error(`Unknown interaction ID ${interaction.customId}`)

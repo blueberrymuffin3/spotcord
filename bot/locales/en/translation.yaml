@@ -7,7 +7,10 @@ error:
 
 generic:
   song_inline: "{{name, inline_block}} by {{artists, artists, inline_block}}"
+  album_inline: "{{name, inline_block}} by {{artists, artists, inline_block}}"
   song_added_to_queue: $t(generic.song_inline) added to the queue
+  album_added_to_queue: '$t(item.track_count, {"count": {{total_tracks}} }) from the album $t(generic.album_inline) added to the queue'
+  playlist_added_to_queue: '$t(item.track_count, {"count": {{tracks.total}} }) from the playlist {{name, inline_block}} added to the queue'
 
 item:
   track_one: track
@@ -55,14 +58,16 @@ command:
       content: Results for query {{query, inline_block}}
       tracks:
         placeholder: $t(item.track_count) found
-        label: '{{name, truncate_ellipses(max_length: 40)}} [{{duration_ms, duration_ms}}]'
-        description: '{{artists, artists, truncate_ellipses(max_length: 100)}}'
+        label: "{{name, truncate_ellipses(max_length: 40)}} [{{duration_ms, duration_ms}}]"
+        description: "{{artists, artists, truncate_ellipses(max_length: 100)}}"
+        success: Song added to queue
       albums:
         placeholder: $t(item.album_count) found
         label: '{{name, truncate_ellipses(max_length: 40)}} [$t(item.track_count, {"count": {{total_tracks}} })]'
-        description: '{{artists, artists, truncate_ellipses(max_length: 100)}}'
+        description: "{{artists, artists, truncate_ellipses(max_length: 100)}}"
+        success: Album added to queue
       playlists:
         placeholder: $t(item.playlist_count) found
         label: '{{name, truncate_ellipses(max_length: 40)}} [$t(item.track_count, {"count": {{tracks.total}} })]'
-        description: '{{description, decode_entity, truncate_ellipses(max_length: 100)}}'
-      success: Song added to queue
+        description: "{{description, decode_entity, truncate_ellipses(max_length: 100)}}"
+        success: Playlist added to queue
