@@ -1,18 +1,15 @@
 namespace: spotcord-prod
 bases:
   - ../base
-
 resources:
   - namespace.yaml
   - bot-env-secret.yaml
-
 configMapGenerator:
   - envs:
       - .env
     name: bot-env-config
-
 images:
   - name: ghcr.io/bmxguy100/spotcord-downloader
-    newTag: latest
+    newTag: v10
   - name: ghcr.io/bmxguy100/spotcord-bot
-    newTag: latest
+    newTag: v10
