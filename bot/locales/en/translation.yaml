@@ -24,10 +24,6 @@ item:
   playlist_count: "{{count, number}} $t(item.playlist)"
 
 command:
-  ping:
-    description: Replies with Pong!
-    response: Pong!
-
   neko:
     description: Fetch an image of a catgirl! Nya〜
 
