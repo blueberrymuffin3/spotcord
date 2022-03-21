@@ -8,7 +8,7 @@ export default class NowPlayingCommand extends Command {
 
         if (subscription.nowPlaying) {
             await interaction.reply({
-                content: t('command.np.response.success', subscription.nowPlaying),
+                content: t('command.np.response.success', subscription.nowPlaying.info),
                 embeds: [await subscription.nowPlaying.generateEmbed()]
             })
         } else {
