@@ -10,6 +10,6 @@ configMapGenerator:
     name: bot-env-config
 images:
   - name: ghcr.io/bmxguy100/spotcord-downloader
-    newTag: v15
+    newTag: v16
   - name: ghcr.io/bmxguy100/spotcord-bot
-    newTag: v15
+    newTag: v16
