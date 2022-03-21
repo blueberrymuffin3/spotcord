@@ -1,3 +1,5 @@
+import { envVars } from "./env-vars.js"
+
 // Format as m:ss
 export function formatDurationMs(duration: number){
     let seconds = Math.floor(duration / 1000)
@@ -20,5 +22,5 @@ export function formatPlural(count: number, plural: string, singular: string){
 }
 
 export function isProd() {
-    return process.env.BOT_ENV == 'PROD'
+    return envVars.BOT_ENV == 'PROD'
 }

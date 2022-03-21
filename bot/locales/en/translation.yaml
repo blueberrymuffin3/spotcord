@@ -4,6 +4,7 @@ error:
   query_no_results_for: No results found for {{query, inline_block}}
   join_timeout: Failed to join voice channel, please try again later!
   track_play: Failed to play track, please try again later!
+  command_generic: An error occurred while executing the command
 
 generic:
   song_inline: "{{name, inline_block}} by {{artists, artists, inline_block}}"
@@ -51,6 +52,9 @@ command:
       empty: There are no songs in the queue
       line: "{{index}}: {{name}} by {{artists, artists}} [{{duration_ms, duration_ms}}]"
       more: 'and {{count}} more $t(item.track)…'
+
+  np:
+    description: Shows what's Now Playing
 
   play:
     description: Play a song from spotify

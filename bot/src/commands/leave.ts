@@ -1,26 +1,14 @@
 import { t } from 'i18next';
-import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
-import { getSubscription } from '../music/subscription.js';
+import { Command } from '../command.js';
 
-export const data = new SlashCommandBuilder()
-    .setName('leave')
-    .setDescription(t('command.leave.description'))
+export default class LeaveCommand extends Command {
+    protected async _execute(interaction: CommandInteraction<'cached'>) {
+        const subscription = this.getSubscription(interaction)
 
-export async function execute(interaction: CommandInteraction) {
-    if(!interaction.guildId) return;
-
-    let subscription = getSubscription(interaction.guildId)
-    if(!subscription){
-        await interaction.reply({
-            content: t('error.bot_not_connected'),
-            ephemeral: true
-        })
-        return
+        await subscription.deleteLastNowPlaying()
+        subscription.voiceConnection.destroy()
+        await interaction.reply(t('command.leave.response'))
     }
-
-    await subscription.deleteLastNowPlaying()
-    subscription.voiceConnection.destroy()
-    await interaction.reply(t('command.leave.response'))
 }
 

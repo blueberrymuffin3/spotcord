@@ -1,31 +1,14 @@
-import dotenv from 'dotenv';
-dotenv.config()
-
 import './i18n.js'
 
 import { Client, Intents } from 'discord.js';
-import { readdirSync } from 'node:fs';
 import { isProd } from './util.js';
 import { MusicSubscription } from './music/subscription.js';
-const { DISCORD_TOKEN } = process.env as Record<string, string>;
+import { SelectMenuCommands, SlashCommands } from './command-list.js';
+import { t } from 'i18next';
+import { envVars } from './env-vars.js';
+const { DISCORD_TOKEN } = envVars;
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
-
-let commands: Record<string, any> = {};
-let interactions: Record<string, any> = {};
-const commandFiles = readdirSync('./dist/commands').filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-	const command = await import(`./commands/${file}`);
-	// Set a new item in the Collection
-	// With the key as the command name and the value as the exported module
-	commands[command.data.name] = command;
-	if (command.interactionIds !== undefined) {
-		for (let customId of command.interactionIds) {
-			interactions[customId] = command
-		}
-	}
-}
 
 client.once('ready', () => {
 	console.log('Ready!');
@@ -40,34 +23,27 @@ client.once('ready', () => {
 
 client.on('interactionCreate', async interaction => {
 	if (interaction.isCommand()) {
-		const command = commands[interaction.commandName];
-
-		if (!command) return;
+		const command = SlashCommands.get(interaction.commandName);
 
 		try {
-			await command.execute(interaction);
+			await command!.execute(interaction);
 		} catch (error) {
 			console.error(error);
+
+			const content = { content: t('error.command_generic'), ephemeral: true }
 			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.followUp(content);
 			} else {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.reply(content);
 			}
 		}
 	} else if (interaction.isSelectMenu()) {
-		const command = interactions[interaction.customId];
-
-		if (!command) return;
+		const command = SelectMenuCommands.get(interaction.customId);
 
 		try {
-			await command.interact(interaction);
+			await command!.selectMenuInteract(interaction).catch();
 		} catch (error) {
 			console.error(error);
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-			} else {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-			}
 		}
 	}
 });
@@ -83,5 +59,4 @@ process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
 client.on('error', console.warn);
 
-// await setupSpotifyClient()
 await client.login(DISCORD_TOKEN);

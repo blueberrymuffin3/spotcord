@@ -1,25 +1,13 @@
 import { t } from 'i18next';
-import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
-import { getSubscription } from '../music/subscription.js';
+import { Command } from '../command.js';
 
-export const data = new SlashCommandBuilder()
-    .setName('skip')
-    .setDescription(t('command.skip.description'))
+export default class SkipCommand extends Command {
+    protected async _execute(interaction: CommandInteraction<'cached'>) {
+        const subscription = this.getSubscription(interaction)
 
-export async function execute(interaction: CommandInteraction) {
-    if (!interaction.guildId) return;
-
-    let subscription = getSubscription(interaction.guildId)
-    if (!subscription) {
-        await interaction.reply({
-            content: t('error.bot_not_connected'),
-            ephemeral: true
-        })
-        return
+        // Automatically plays the next song
+        subscription.audioPlayer.stop()
+        await interaction.reply(t('command.skip.response'))
     }
-
-    // Automatically plays the next song
-    subscription.audioPlayer.stop()
-    await interaction.reply(t('command.skip.response'))
 }
