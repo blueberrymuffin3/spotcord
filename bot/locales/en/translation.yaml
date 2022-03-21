@@ -11,7 +11,7 @@ generic:
   album_inline: "{{name, inline_block}} by {{artists, artists, inline_block}}"
   song_added_to_queue: $t(generic.song_inline) added to the queue
   album_added_to_queue: '$t(item.track_count, {"count": {{total_tracks}} }) from the album $t(generic.album_inline) added to the queue'
-  playlist_added_to_queue: '$t(item.track_count, {"count": {{tracks.total}} }) from the playlist {{name, inline_block}} added to the queue'
+  playlist_added_to_queue: '$t(item.track_count, {"count": {{total_tracks}} }) from the playlist {{name, inline_block}} added to the queue'
 
 item:
   track_one: song

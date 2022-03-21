@@ -65,13 +65,29 @@ export async function getAlbum(albumId: string) {
     return body;
 }
 
-export async function getPlaylist(albumId: string) {
-    const { body } = await spotifyClient.getPlaylist(albumId)
+export async function getPlaylistWithTracks(playlistId: string) {
+    let { body: data } = await spotifyClient.getPlaylist(playlistId)
 
-    for (const trackObject of body.tracks.items) {
-        if(trackObject.is_local) continue;
-        trackCacheSimple.set(trackObject.track.id, trackObject.track)
+    let tracks = []
+    let offset = 0
+    let body = data.tracks
+    while (true) {
+        for (const track of body.items) {
+            if (track.is_local) continue;
+            trackCacheSimple.set(track.track.id, track.track)
+            tracks.push(track.track)
+        }
+
+        if (body.next) {
+            offset += body.items.length
+            console.log(`Fetching extra page of ${playlistId} (offset: ${offset})`)
+            body = (await spotifyClient.getPlaylistTracks(playlistId, { offset })).body
+        } else {
+            break
+        }
     }
 
-    return body;
+    return {
+        data, tracks
+    };
 }

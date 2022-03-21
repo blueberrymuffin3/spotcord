@@ -153,16 +153,18 @@ export default class SearchCommand extends Command {
                 const playlistId = interaction.values[0];
 
                 try {
-                    const playlist = await spotify.getPlaylist(playlistId)
+                    const { data, tracks } = await spotify.getPlaylistWithTracks(playlistId)
 
-                    for (const trackObject of playlist.tracks.items) {
-                        if (trackObject.is_local) continue;
-                        const track = await Track.from(trackObject.track.id, interaction.user);
+                    for (const { id } of tracks) {
+                        const track = await Track.from(id, interaction.user);
                         subscription.enqueue(track);
                     }
 
                     await updateAndClear(t('command.search.response.playlists.success'))
-                    await interaction.followUp(t('generic.playlist_added_to_queue', playlist))
+                    await interaction.followUp(t('generic.playlist_added_to_queue', {
+                        ...data,
+                        total_tracks: tracks.length
+                    }))
                 } catch (error) {
                     console.warn(error);
                     await interaction.followUp(t('error.track_play'));
