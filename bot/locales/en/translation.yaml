@@ -53,6 +53,12 @@ command:
       line: "{{index}}: {{name}} by {{artists, artists}} [{{duration_ms, duration_ms}}]"
       more: 'and {{count}} more $t(item.track)…'
 
+  shuffle:
+    description: Shuffles all the songs currently in the queue
+    response:
+      empty: There are no songs in the queue
+      success: Shuffled $t(item.track_count)
+
   np:
     description: Shows what's Now Playing
     response:
