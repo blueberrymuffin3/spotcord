@@ -55,6 +55,9 @@ command:
 
   np:
     description: Shows what's Now Playing
+    response:
+      nothing: Nothing is playing right now
+      success: Now Playing $t(song_inline)
 
   play:
     description: Play a song from spotify

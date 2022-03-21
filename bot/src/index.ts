@@ -48,9 +48,8 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
-const shutdown = async (signal: string) => {
+const shutdown = (signal: string) => {
 	console.log(`Shutting down due to ${signal}...`)
-	await MusicSubscription.closeAllSubscriptions()
 	client.destroy();
 	console.log(`Done shutting down`)
 }

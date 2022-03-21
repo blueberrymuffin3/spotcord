@@ -16,7 +16,6 @@ import { promisify } from 'node:util';
 import { Message, Snowflake, TextBasedChannel, VoiceBasedChannel } from 'discord.js';
 
 const wait = promisify(setTimeout);
-let allowNewSubscriptions = true;
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 
 export function getSubscription(
@@ -26,7 +25,7 @@ export function getSubscription(
 	updatesTo: TextBasedChannel | null = null
 ) {
 	let subscription = subscriptions.get(guildId)
-	if (!subscription && createIfNotExist && createIn && allowNewSubscriptions) {
+	if (!subscription && createIfNotExist && createIn) {
 		subscription = new MusicSubscription(
 			joinVoiceChannel({
 				guildId: guildId,
@@ -55,24 +54,12 @@ function* mapIter<T, U>(iterable: IterableIterator<T>, callback: (x: T) => U) {
 export class MusicSubscription {
 	public readonly voiceConnection: VoiceConnection;
 	public readonly audioPlayer: AudioPlayer;
+	public nowPlaying: Track | null = null;
 	public queue: Track[];
 	public queueLock = false;
 	public readyLock = false;
 	private voiceChannelId: Snowflake
 	private updates: TextBasedChannel
-	private nowPlayingMessage: Message | undefined
-
-	static async closeAllSubscriptions() {
-		// Ensures all nowPlaying messages are deleted before the bot exits
-		// TODO: There's gotta be a better way to do this
-		allowNewSubscriptions = false
-		await Promise.all(
-			mapIter(subscriptions.values(), async subscription => {
-				await subscription.deleteLastNowPlaying()?.catch(() => { })
-				subscription.voiceConnection.destroy()
-			})
-		)
-	}
 
 	public constructor(voiceConnection: VoiceConnection, voiceChannelId: Snowflake, updates: TextBasedChannel) {
 		this.voiceConnection = voiceConnection;
@@ -173,7 +160,6 @@ export class MusicSubscription {
 	 * Stops audio playback and empties the queue.
 	 */
 	public stop() {
-		this.queueLock = true;
 		this.queue = [];
 		this.audioPlayer.stop();
 	}
@@ -209,27 +195,16 @@ export class MusicSubscription {
 	}
 
 	async onStart(track: Track) {
-		this.nowPlayingMessage = await this.updates.send({
-			content: `Now Playing in <#${this.voiceChannelId}>`,
-			embeds: [await track.generateEmbed()]
-		})
+		this.nowPlaying = track
 	}
 
 	async onFinish(track: Track) {
-		await this.deleteLastNowPlaying()
+		this.nowPlaying = null
 	}
 
 	async onError(track: Track, error: Error) {
+		this.nowPlaying = null
 		console.warn(error)
-		await this.deleteLastNowPlaying()
 		await this.updates.send(`An error occurred playing ${t('generic.song_inline', track.info)}`)
-	}
-
-	async deleteLastNowPlaying() {
-		if (this.nowPlayingMessage != null) {
-			const message = this.nowPlayingMessage
-			this.nowPlayingMessage = undefined
-			await message.delete()
-		}
 	}
 }
