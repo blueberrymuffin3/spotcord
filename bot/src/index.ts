@@ -16,7 +16,7 @@ client.once('ready', () => {
 		status: 'online',
 		activities: [{
 			type: 'LISTENING',
-			name: isProd() ? 'Spotify' : 'Spotify (dev)'
+			name: isProd() ? 'Waifu requests' : 'Spotify (dev)'
 		}]
 	})
 });
